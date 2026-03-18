@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FísicaLab — MRU & MRUA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:      #eef3f2;
+      --card:    #f7fafa;
+      --mint:    #2baa8e;
+      --mint2:   #3dc9a9;
+      --mint3:   #1d7a65;
+      --gray3:   #2d3748;
+      --green:   #1a8f6f;
+      --red:     #c0392b;
+      --text:    #2d3748;
+      --muted:   #718096;
+      --border:  rgba(43,170,142,0.22);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -5%, rgba(43,170,142,0.13) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 40% at 95% 85%, rgba(61,201,169,0.08) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 50% at 0% 60%, rgba(113,128,150,0.06) 0%, transparent 55%);
+      pointer-events: none; z-index: 0;
+    }
+    body::after {
+      content: ''; position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(43,170,142,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(43,170,142,0.06) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none; z-index: 0;
+    }
+    .page-wrap {
+      position: relative; z-index: 1;
+      max-width: 960px; margin: 0 auto; padding: 0 20px 80px;
+    }
+
+    /* HERO */
+    .hero {
+      text-align: center; padding: 70px 0 50px;
+      animation: heroIn 0.9s cubic-bezier(.22,1,.36,1) both;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--mint); margin-bottom: 20px;
+    }
+    .hero-eyebrow::before, .hero-eyebrow::after {
+      content: ''; display: block; width: 40px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--mint));
+    }
+    .hero-eyebrow::after { background: linear-gradient(90deg, var(--mint), transparent); }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(38px, 7vw, 72px);
+      font-weight: 900; line-height: 1.05; letter-spacing: -1px;
+      color: var(--gray3); margin-bottom: 8px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--mint3) 0%, var(--mint) 50%, var(--mint2) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-sub { font-size: 15px; color: var(--muted); font-weight: 300; margin-top: 14px; }
+
+    /* DIVIDER */
+    .divider { display: flex; align-items: center; gap: 16px; margin: 40px 0 36px; }
+    .divider-line { flex: 1; height: 1px; background: var(--border); }
+    .divider-diamond { width: 8px; height: 8px; background: var(--mint); transform: rotate(45deg); flex-shrink: 0; }
+    .divider-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2.5px; color: var(--mint); text-transform: uppercase; }
+
+    /* THEORY GRID */
+    .theory-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+      margin-bottom: 50px; animation: fadeUp 0.7s ease 0.15s both;
+    }
+    @media (max-width: 620px) { .theory-grid { grid-template-columns: 1fr; } }
+    .theory-card {
+      position: relative;
+      background: linear-gradient(135deg, #ffffff, #f2f9f7);
+      border: 1px solid var(--border); border-radius: 14px;
+      padding: 36px 32px; overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+      box-shadow: 0 2px 20px rgba(43,170,142,0.07);
+    }
+    .theory-card:hover { transform: translateY(-4px); box-shadow: 0 16px 50px rgba(43,170,142,0.14); }
+    .theory-card::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 80px; height: 80px;
+      background: linear-gradient(135deg, var(--mint) 0%, transparent 60%); opacity: 0.12;
+    }
+    .theory-card::after {
+      content: ''; position: absolute; bottom: 0; right: 0; width: 60px; height: 60px;
+      background: linear-gradient(315deg, var(--mint2) 0%, transparent 60%); opacity: 0.07;
+    }
+    .card-type {
+      font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 3px;
+      color: var(--mint); text-transform: uppercase; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-type::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .theory-card h3 { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--gray3); margin-bottom: 12px; line-height: 1.3; }
+    .theory-card p { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 22px; font-weight: 300; }
+    .formula-pills { display: flex; flex-direction: column; gap: 8px; }
+    .formula-pill {
+      font-family: 'DM Mono', monospace; font-size: 13px; color: var(--mint3);
+      background: rgba(43,170,142,0.08); border: 1px solid rgba(43,170,142,0.18);
+      border-radius: 8px; padding: 10px 16px; letter-spacing: 0.3px;
+    }
+
+    /* CALC PANEL */
+    .calc-panel {
+      background: #ffffff; border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden; box-shadow: 0 8px 50px rgba(43,170,142,0.1), 0 2px 12px rgba(0,0,0,0.05);
+      animation: fadeUp 0.7s ease 0.25s both;
+    }
+    .panel-header {
+      background: linear-gradient(90deg, rgba(43,170,142,0.08), transparent);
+      border-bottom: 1px solid var(--border); padding: 18px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .panel-dots { display: flex; gap: 8px; }
+    .panel-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .panel-dot.g { background: var(--mint); box-shadow: 0 0 8px var(--mint); }
+    .panel-dot.b { background: var(--mint2); box-shadow: 0 0 8px var(--mint2); }
+    .panel-dot.d { background: var(--muted); opacity: 0.35; }
+    .panel-title { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--mint); text-transform: uppercase; }
+
+    .progress-bar { display: flex; border-bottom: 1px solid var(--border); background: #f4faf8; }
+    .progress-step {
+      flex: 1; padding: 10px 16px;
+      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.5px;
+      color: var(--muted); text-transform: uppercase; text-align: center;
+      border-right: 1px solid var(--border); transition: color 0.3s, background 0.3s;
+    }
+    .progress-step:last-child { border-right: none; }
+    .progress-step.active { color: var(--mint); background: rgba(43,170,142,0.08); }
+    .progress-step.done { color: var(--green); background: rgba(26,143,111,0.06); }
+    .progress-step.done::after { content: ' ✓'; }
+
+    .panel-body { padding: 32px; }
+
+    .step-label {
+      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2.5px;
+      color: var(--mint); text-transform: uppercase; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .step-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+    /* TYPE CARDS */
+    .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 32px; }
+    .type-card {
+      position: relative; border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 22px 20px; cursor: pointer; background: var(--card); text-align: left;
+      transition: all 0.25s;
+    }
+    .type-card:hover { border-color: rgba(43,170,142,0.45); background: rgba(43,170,142,0.04); }
+    .type-card.active {
+      border-color: var(--mint); background: rgba(43,170,142,0.07);
+      box-shadow: 0 0 0 3px rgba(43,170,142,0.1);
+    }
+    .tc-icon { font-size: 22px; margin-bottom: 10px; display: block; }
+    .tc-name { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--gray3); margin-bottom: 4px; }
+    .type-card.active .tc-name { color: var(--mint3); }
+    .tc-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .tc-check {
+      position: absolute; top: 14px; right: 14px; width: 20px; height: 20px;
+      border-radius: 50%; border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center; font-size: 10px; transition: all 0.25s;
+    }
+    .type-card.active .tc-check { background: var(--mint); border-color: var(--mint); color: #fff; }
+
+    /* SUB SECTIONS */
+    .sub-section { display: none; animation: slideIn 0.3s ease both; }
+    .sub-section.visible { display: block; }
+
+    /* MRU buttons */
+    .calc-type-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 28px; }
+    @media (max-width: 480px) { .calc-type-row { grid-template-columns: 1fr; } }
+    .ct-btn {
+      border: 1.5px solid var(--border); border-radius: 8px; padding: 14px 10px;
+      cursor: pointer; background: var(--card); color: var(--muted);
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+      text-align: center; transition: all 0.2s;
+    }
+    .ct-btn:hover { border-color: rgba(43,170,142,0.45); color: var(--text); background: rgba(43,170,142,0.04); }
+    .ct-btn.active { border-color: var(--mint); color: var(--mint3); background: rgba(43,170,142,0.09); box-shadow: 0 0 0 3px rgba(43,170,142,0.08); }
+    .ct-icon { font-size: 18px; display: block; margin-bottom: 6px; }
+    .ct-formula { font-family: 'DM Mono', monospace; font-size: 10px; opacity: 0.7; margin-top: 4px; }
+
+    /* MRUA formula buttons */
+    .mrua-formulas { display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
+    .mf-btn {
+      display: flex; align-items: center; gap: 14px;
+      border: 1.5px solid var(--border); border-radius: 8px; padding: 13px 16px;
+      cursor: pointer; background: var(--card); color: var(--muted);
+      font-family: 'DM Mono', monospace; font-size: 12px; transition: all 0.2s; text-align: left;
+    }
+    .mf-btn:hover { border-color: rgba(43,170,142,0.4); color: var(--text); background: rgba(43,170,142,0.04); }
+    .mf-btn.active { border-color: var(--mint); color: var(--mint3); background: rgba(43,170,142,0.08); box-shadow: 0 0 0 3px rgba(43,170,142,0.07); }
+    .mf-num {
+      width: 26px; height: 26px; border: 1.5px solid currentColor; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0;
+    }
+    .mf-btn.active .mf-num { background: var(--mint); color: #fff; border-color: var(--mint); }
+
+    /* INPUTS */
+    .inputs-section { display: none; animation: slideIn 0.3s ease both; }
+    .inputs-section.visible { display: block; }
+    .inputs-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .inp-group {
+      border: 1.5px solid var(--border); border-radius: 8px; padding: 16px 20px;
+      background: var(--card); transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .inp-group:focus-within { border-color: rgba(43,170,142,0.55); box-shadow: 0 0 0 3px rgba(43,170,142,0.08); }
+    .inp-label {
+      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.5px;
+      color: var(--mint); text-transform: uppercase; margin-bottom: 10px; display: block;
+    }
+    .inp-row { display: flex; gap: 8px; }
+    .inp-row input {
+      flex: 1; background: #ffffff; border: 1.5px solid rgba(43,170,142,0.2);
+      border-radius: 6px; padding: 10px 14px; color: var(--gray3);
+      font-family: 'DM Mono', monospace; font-size: 14px; outline: none; transition: border-color 0.2s;
+    }
+    .inp-row input:focus { border-color: var(--mint); }
+    .inp-row input::placeholder { color: rgba(113,128,150,0.5); font-size: 12px; }
+    .inp-row select {
+      background: #ffffff; border: 1.5px solid rgba(43,170,142,0.2);
+      border-radius: 6px; padding: 10px 12px; color: var(--muted);
+      font-family: 'DM Mono', monospace; font-size: 11px; outline: none;
+      cursor: pointer; min-width: 110px; transition: border-color 0.2s;
+    }
+    .inp-row select:focus { border-color: var(--mint); }
+
+    /* CALC BTN */
+    .calc-btn {
+      width: 100%; padding: 18px; border: none; border-radius: 10px;
+      font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700;
+      cursor: pointer; position: relative; overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.15s; display: none;
+      background: linear-gradient(135deg, var(--mint3) 0%, var(--mint) 50%, var(--mint2) 100%);
+      color: #ffffff; box-shadow: 0 4px 20px rgba(43,170,142,0.35);
+    }
+    .calc-btn.visible { display: block; }
+    .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 35px rgba(43,170,142,0.4); }
+    .calc-btn:active { transform: translateY(0); }
+    .calc-btn::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.12), transparent); }
+
+    /* RESULT */
+    .result-panel { display: none; margin-top: 20px; border-radius: 10px; overflow: hidden; animation: resultIn 0.5s cubic-bezier(.34,1.56,.64,1) both; }
+    .result-panel.visible { display: block; }
+    .result-panel.success { border: 1.5px solid rgba(43,170,142,0.35); background: linear-gradient(135deg, rgba(43,170,142,0.07), #f2faf8); }
+    .result-panel.error { border: 1.5px solid rgba(192,57,43,0.3); background: linear-gradient(135deg, rgba(192,57,43,0.05), #fff8f7); }
+    .result-inner { padding: 28px 32px; text-align: center; }
+    .result-tag { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+    .result-panel.success .result-tag { color: var(--mint); }
+    .result-panel.error .result-tag { color: var(--red); }
+    .result-name { font-family: 'Playfair Display', serif; font-size: 15px; color: var(--muted); margin-bottom: 8px; }
+    .result-val { font-family: 'Playfair Display', serif; font-size: clamp(36px, 8vw, 58px); font-weight: 900; line-height: 1; margin-bottom: 10px; }
+    .result-panel.success .result-val { color: var(--mint3); }
+    .result-panel.error .result-val { color: var(--red); font-size: 20px; }
+    .result-formula { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); background: rgba(43,170,142,0.08); display: inline-block; padding: 5px 16px; border-radius: 6px; border: 1px solid rgba(43,170,142,0.18); }
+
+    /* FOOTER */
+    .footer { text-align: center; margin-top: 60px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer-logo { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--mint); font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; }
+    .footer p { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 1px; }
+
+    @keyframes heroIn { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes resultIn { from { opacity: 0; transform: scale(0.94) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">Laboratorio Virtual · Cinemática</div>
+    <h1>Calculadora de<br><em>Física</em></h1>
+    <p class="hero-sub">Movimiento Rectilíneo Uniforme &amp; Uniformemente Acelerado</p>
+  </div>
+
+  <!-- MARCO TEORICO -->
+  <div class="divider">
+    <div class="divider-line"></div><div class="divider-diamond"></div>
+    <div class="divider-label">Marco Teórico</div>
+    <div class="divider-diamond"></div><div class="divider-line"></div>
+  </div>
+
+  <div class="theory-grid">
+    <!-- MRU -->
+    <div class="theory-card">
+      <div class="card-type">MRU</div>
+      <h3>Movimiento Rectilíneo Uniforme</h3>
+      <p>El objeto se desplaza en línea recta con velocidad <strong>constante</strong>. No existe aceleración en ningún instante del trayecto. Ejemplo: un carro a velocidad fija en autopista.</p>
+      <div class="formula-pills">
+        <div class="formula-pill">d = v × t</div>
+        <div class="formula-pill">v = d / t</div>
+        <div class="formula-pill">t = d / v</div>
+      </div>
+    </div>
+    <!-- MRUA -->
+    <div class="theory-card">
+      <div class="card-type">MRUA</div>
+      <h3>Movimiento Rectilíneo Uniformemente Acelerado</h3>
+      <p>La velocidad <strong>cambia</strong> de forma constante debido a una aceleración. Ejemplo clásico: caída libre con a = 9.8 m/s².</p>
+      <div class="formula-pills">
+        <div class="formula-pill">vf = v0 + a · t</div>
+        <div class="formula-pill">x = v0 · t + (a · t²) / 2</div>
+        <div class="formula-pill">x = ((v0 + vf) / 2) · t</div>
+        <div class="formula-pill">a = (vf − v0) / t</div>
+        <div class="formula-pill">vf² = 2 · a · x + v0²</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALCULADORA -->
+  <div class="divider">
+    <div class="divider-line"></div><div class="divider-diamond"></div>
+    <div class="divider-label">Calculadora</div>
+    <div class="divider-diamond"></div><div class="divider-line"></div>
+  </div>
+
+  <div class="calc-panel">
+    <div class="panel-header">
+      <div class="panel-dots">
+        <div class="panel-dot g"></div>
+        <div class="panel-dot b"></div>
+        <div class="panel-dot d"></div>
+      </div>
+      <div class="panel-title">fisica.lab — calculadora interactiva</div>
+      <div></div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-step active" id="ps1">01 Tipo</div>
+      <div class="progress-step" id="ps2">02 Fórmula</div>
+      <div class="progress-step" id="ps3">03 Datos</div>
+      <div class="progress-step" id="ps4">04 Resultado</div>
+    </div>
+    <div class="panel-body">
+
+      <!-- PASO 1: tipo -->
+      <div class="step-label">Paso 01 — Tipo de movimiento</div>
+      <div class="type-grid">
+        <div class="type-card active" id="cardMRU" onclick="selectType('MRU')">
+          <div class="tc-check" id="chkMRU">✓</div>
+          <span class="tc-icon">⚡</span>
+          <div class="tc-name">MRU</div>
+          <div class="tc-desc">Velocidad constante · Sin aceleración</div>
+        </div>
+        <div class="type-card" id="cardMRUA" onclick="selectType('MRUA')">
+          <div class="tc-check" id="chkMRUA"></div>
+          <span class="tc-icon">🚀</span>
+          <div class="tc-name">MRUA</div>
+          <div class="tc-desc">Aceleración constante · Velocidad variable</div>
+        </div>
+      </div>
+
+      <!-- PASO 2: MRU -->
+      <div class="sub-section visible" id="mruSub">
+        <div class="step-label">Paso 02 — ¿Qué deseas calcular?</div>
+        <div class="calc-type-row">
+          <div class="ct-btn" id="mruD" onclick="selectMRU('distancia')">
+            <span class="ct-icon">📏</span>Distancia<div class="ct-formula">d = v × t</div>
+          </div>
+          <div class="ct-btn" id="mruV" onclick="selectMRU('velocidad')">
+            <span class="ct-icon">💨</span>Velocidad<div class="ct-formula">v = d / t</div>
+          </div>
+          <div class="ct-btn" id="mruT" onclick="selectMRU('tiempo')">
+            <span class="ct-icon">⏱</span>Tiempo<div class="ct-formula">t = d / v</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 2: MRUA -->
+      <div class="sub-section" id="mruaSub">
+        <div class="step-label">Paso 02 — Selecciona la fórmula</div>
+        <div class="mrua-formulas">
+          <div class="mf-btn" onclick="selectMRUA(1)"><span class="mf-num">1</span> vf = v0 + a · t</div>
+          <div class="mf-btn" onclick="selectMRUA(2)"><span class="mf-num">2</span> x = v0 · t + (a · t²) / 2</div>
+          <div class="mf-btn" onclick="selectMRUA(3)"><span class="mf-num">3</span> x = ((v0 + vf) / 2) · t</div>
+          <div class="mf-btn" onclick="selectMRUA(4)"><span class="mf-num">4</span> a = (vf − v0) / t</div>
+          <div class="mf-btn" onclick="selectMRUA(5)"><span class="mf-num">5</span> vf² = 2 · a · x + v0²</div>
+        </div>
+      </div>
+
+      <!-- PASO 3: inputs -->
+      <div class="inputs-section" id="inputsSection">
+        <div class="step-label">Paso 03 — Ingresa los valores</div>
+        <div class="inputs-grid" id="inputsGrid"></div>
+        <button class="calc-btn visible" id="calcBtn" onclick="calcular()">Calcular Resultado</button>
+      </div>
+
+      <!-- PASO 4: resultado -->
+      <div class="result-panel" id="resultPanel">
+        <div class="result-inner">
+          <div class="result-tag" id="rTag">Resultado</div>
+          <div class="result-name" id="rName"></div>
+          <div class="result-val" id="rVal">—</div>
+          <div class="result-formula" id="rFormula"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-logo">FísicaLab</div>
+    <p>calculadora de cinemática · MRU &amp; MRUA</p>
+  </div>
+
+</div>
+<script>
+  let TYPE = 'MRU', FORMULA = null;
+  window.onload = () => { selectType('MRU'); };
+
+  function setProgress(step) {
+    for (let i = 1; i <= 4; i++) {
+      const el = document.getElementById('ps' + i);
+      el.className = 'progress-step' + (i < step ? ' done' : i === step ? ' active' : '');
+    }
+  }
+
+  function selectType(t) {
+    TYPE = t; FORMULA = null;
+    ['MRU','MRUA'].forEach(x => {
+      document.getElementById('card'+x).classList.toggle('active', x===t);
+      document.getElementById('chk'+x).textContent = x===t ? '✓' : '';
+    });
+    document.getElementById('mruSub').classList.toggle('visible', t==='MRU');
+    document.getElementById('mruaSub').classList.toggle('visible', t==='MRUA');
+    hideInputs(); hideResult();
+    ['mruD','mruV','mruT'].forEach(id => document.getElementById(id).classList.remove('active'));
+    document.querySelectorAll('.mf-btn').forEach(b => b.classList.remove('active'));
+    setProgress(2);
+  }
+
+  function selectMRU(what) {
+    FORMULA = what;
+    ['mruD','mruV','mruT'].forEach(id => document.getElementById(id).classList.remove('active'));
+    const map = {distancia:'mruD', velocidad:'mruV', tiempo:'mruT'};
+    document.getElementById(map[what]).classList.add('active');
+    let html = '';
+    if (what==='distancia') html = mkV('v') + mkT('t');
+    else if (what==='velocidad') html = mkD('d') + mkT('t');
+    else html = mkD('d') + mkV('v');
+    showInputs(html);
+  }
+
+  function selectMRUA(n) {
+    FORMULA = n;
+    document.querySelectorAll('.mf-btn').forEach((b,i) => b.classList.toggle('active', i===n-1));
+    let html = '';
+    if (n===1) html = mkV('v0','Velocidad inicial (v0)') + mkA() + mkT('t');
+    else if (n===2) html = mkV('v0','Velocidad inicial (v0)') + mkA() + mkT('t');
+    else if (n===3) html = mkV('v0','Velocidad inicial (v0)') + mkV('vf','Velocidad final (vf)') + mkT('t');
+    else if (n===4) html = mkV('vf','Velocidad final (vf)') + mkV('v0','Velocidad inicial (v0)') + mkT('t');
+    else html = mkV('v0','Velocidad inicial (v0)') + mkA() + mkD('x','Distancia (x)');
+    showInputs(html);
+  }
+
+  // builders
+  function mkV(id, label='Velocidad (v)') {
+    return `<div class="inp-group"><span class="inp-label">${label}</span><div class="inp-row"><input type="number" id="${id}" placeholder="ej: 15" step="any"/><select id="${id}_u"><option value="ms">m/s</option><option value="kmh">km/h</option></select></div></div>`;
+  }
+  function mkD(id='d', label='Distancia (d)') {
+    return `<div class="inp-group"><span class="inp-label">${label}</span><div class="inp-row"><input type="number" id="${id}" placeholder="ej: 500" step="any"/><select id="${id}_u"><option value="m">metros</option><option value="km">kilómetros</option></select></div></div>`;
+  }
+  function mkT(id='t') {
+    return `<div class="inp-group"><span class="inp-label">Tiempo (t)</span><div class="inp-row"><input type="number" id="${id}" placeholder="ej: 30" step="any"/><select id="${id}_u"><option value="s">segundos</option><option value="min">minutos</option><option value="h">horas</option></select></div></div>`;
+  }
+  function mkA() {
+    return `<div class="inp-group"><span class="inp-label">Aceleración (a) — m/s²</span><div class="inp-row"><input type="number" id="a" placeholder="ej: 9.8" step="any"/></div></div>`;
+  }
+
+  function showInputs(html) {
+    document.getElementById('inputsGrid').innerHTML = html;
+    document.getElementById('inputsSection').classList.add('visible');
+    document.getElementById('calcBtn').classList.add('visible');
+    hideResult(); setProgress(3);
+  }
+  function hideInputs() {
+    document.getElementById('inputsSection').classList.remove('visible');
+    document.getElementById('calcBtn').classList.remove('visible');
+  }
+  function hideResult() { document.getElementById('resultPanel').classList.remove('visible','success','error'); }
+
+  // converters
+  function gv(id) { return parseFloat(document.getElementById(id)?.value); }
+  function gu(id) { return document.getElementById(id)?.value || ''; }
+  function cv(val,u) { return u==='kmh' ? val/3.6 : val; }
+  function cd(val,u) { return u==='km' ? val*1000 : val; }
+  function ct(val,u) { return u==='min' ? val*60 : u==='h' ? val*3600 : val; }
+  function fmt(n) { return isNaN(n) ? '?' : (Math.round(n*10000)/10000).toLocaleString('es-CO'); }
+
+  function showResult(name, val, formula) {
+    const p = document.getElementById('resultPanel');
+    document.getElementById('rTag').textContent = '✦ Resultado obtenido';
+    document.getElementById('rName').textContent = name;
+    document.getElementById('rVal').textContent = val;
+    document.getElementById('rFormula').textContent = formula;
+    p.className = 'result-panel visible success';
+    setProgress(4);
+    p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  function showError(msg) {
+    const p = document.getElementById('resultPanel');
+    document.getElementById('rTag').textContent = '⚠ Error';
+    document.getElementById('rName').textContent = 'Revisa los datos ingresados';
+    document.getElementById('rVal').textContent = msg;
+    document.getElementById('rFormula').textContent = '';
+    p.className = 'result-panel visible error';
+  }
+
+  function calcular() {
+    hideResult();
+    if (TYPE==='MRU') calcMRU(); else calcMRUA();
+  }
+
+  function calcMRU() {
+    if (!FORMULA) { showError('Selecciona qué calcular'); return; }
+    if (FORMULA==='distancia') {
+      const v=cv(gv('v'),gu('v_u')), t=ct(gv('t'),gu('t_u'));
+      if (isNaN(v)||isNaN(t)) return showError('Completa todos los campos');
+      showResult('Distancia', fmt(v*t)+' metros', 'd = v × t');
+    } else if (FORMULA==='velocidad') {
+      const d=cd(gv('d'),gu('d_u')), t=ct(gv('t'),gu('t_u'));
+      if (isNaN(d)||isNaN(t)) return showError('Completa todos los campos');
+      if (t===0) return showError('El tiempo no puede ser cero');
+      showResult('Velocidad', fmt(d/t)+' m/s', 'v = d / t');
+    } else {
+      const d=cd(gv('d'),gu('d_u')), v=cv(gv('v'),gu('v_u'));
+      if (isNaN(d)||isNaN(v)) return showError('Completa todos los campos');
+      if (v===0) return showError('La velocidad no puede ser cero');
+      showResult('Tiempo', fmt(d/v)+' segundos', 't = d / v');
+    }
+  }
+
+  function calcMRUA() {
+    if (!FORMULA) { showError('Selecciona una fórmula'); return; }
+    const n = FORMULA;
+    if (n===1) {
+      const v0=cv(gv('v0'),gu('v0_u')), a=gv('a'), t=ct(gv('t'),gu('t_u'));
+      if ([v0,a,t].some(isNaN)) return showError('Completa todos los campos');
+      showResult('Velocidad Final', fmt(v0+a*t)+' m/s', 'vf = v0 + a · t');
+    } else if (n===2) {
+      const v0=cv(gv('v0'),gu('v0_u')), a=gv('a'), t=ct(gv('t'),gu('t_u'));
+      if ([v0,a,t].some(isNaN)) return showError('Completa todos los campos');
+      showResult('Distancia', fmt(v0*t + a*t*t/2)+' metros', 'x = v0·t + (a·t²)/2');
+    } else if (n===3) {
+      const v0=cv(gv('v0'),gu('v0_u')), vf=cv(gv('vf'),gu('vf_u')), t=ct(gv('t'),gu('t_u'));
+      if ([v0,vf,t].some(isNaN)) return showError('Completa todos los campos');
+      showResult('Distancia', fmt(((v0+vf)/2)*t)+' metros', 'x = ((v0+vf)/2) · t');
+    } else if (n===4) {
+      const vf=cv(gv('vf'),gu('vf_u')), v0=cv(gv('v0'),gu('v0_u')), t=ct(gv('t'),gu('t_u'));
+      if ([vf,v0,t].some(isNaN)) return showError('Completa todos los campos');
+      if (t===0) return showError('El tiempo no puede ser cero');
+      showResult('Aceleración', fmt((vf-v0)/t)+' m/s²', 'a = (vf − v0) / t');
+    } else if (n===5) {
+      const v0=cv(gv('v0'),gu('v0_u')), a=gv('a'), x=cd(gv('x'),gu('x_u'));
+      if ([v0,a,x].some(isNaN)) return showError('Completa todos los campos');
+      const inside = 2*a*x + v0*v0;
+      if (inside<0) return showError('Raíz negativa — revisa los datos');
+      showResult('Velocidad Final', fmt(Math.sqrt(inside))+' m/s', 'vf² = 2·a·x + v0²');
+    }
+  }
+</script>
+</body>
+</html>
